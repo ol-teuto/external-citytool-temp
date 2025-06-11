@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "external-citytool.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "external-citytool.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "external-citytool.labels" . | nindent 8 }}
+    spec:
+      {{- if and .Values.registryAuth.username .Values.registryAuth.password }}
+      imagePullSecrets:
+        - name: {{ printf "pullsecret-%s" .Release.Name }}
+      {{- end }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsGroup: 1000
+        runAsUser: 1000
+        fsGroup: 1000
+        runAsNonRoot: true
+      hostIPC: false
+      hostPID: false
+      hostNetwork: false
+      containers:
+        - name: main
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 1000
+            runAsUser: 1000
+          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}@{{ .Values.image.sha }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: DB_HOST
+              value: {{ .Values.postgresService | quote }}
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-owner-user.%s.credentials.postgresql.acid.zalan.do" .Release.Name .Values.postgresService | quote }}
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ printf "%s-owner-user.%s.credentials.postgresql.acid.zalan.do" .Release.Name .Values.postgresService | quote }}
+                  key: password
+            - name: DB_DATABASE
+              value: {{ .Release.Name | replace "-" "_" | quote }}
+            - name: AUTH_KEYCLOAK_ISSUER
+              value: {{ .Values.keycloakIssuer | quote }}
+            - name: AUTH_KEYCLOAK_ID
+              value: {{ .Values.keycloakClientId | quote }}
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

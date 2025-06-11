@@ -1,0 +1,26 @@
+image:
+  repository: ""
+  registry: ""
+  sha: ""
+
+registryAuth:
+  username: null
+  password: null
+
+host: null
+certIssuer: null
+postgresService: null
+keycloakIssuer: null
+keycloakClientId: null
+allowExternalEgress: true
+
+tenant: ""
+citytool: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 50Mi
+  limits:
+    cpu: 400m
+    memory: 200Mi
