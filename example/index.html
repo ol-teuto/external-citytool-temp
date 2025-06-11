@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Test City Tool</title>
+	</head>
+	<body>
+		<script
+			src="https://unpkg.com/oidc-client-ts@3.0.1/dist/browser/oidc-client-ts.min.js"
+			integrity="sha384-yYhoQzX1y1sIMUbNtkFyPz1wJjxay2OjW7gh5mZHBuUWWuqwnEumdW+auXJDabNU"
+			crossorigin=""
+		></script>
+		<script>
+			// if we can't handle an error in a better way, fall back to auto-reloading the whole page
+			onerror = onunhandledrejection = () => setTimeout(() => location.reload(), 5000);
+		</script>
+		<script>
+			fetchOk = async (...args) => {
+				const response = await fetch(...args);
+				if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+				return response;
+			};
+
+			fetchAuthenticated = async (url, options = {}) => {
+				options.headers = {
+					Authorization: `Bearer ${(await userManager.getUser()).access_token}`,
+					...options.headers
+				};
+				return fetchOk(url, options);
+			};
+
+			fetchOk("/time").then(resp => resp.text()).then(time => document.getElementById("time").textContent = time);
+
+			(async () => {
+                config = await fetchOk("./config").then(r => r.json());
+				document.getElementById("issuer").textContent = config.issuer;
+				document.getElementById("clientId").textContent = config.clientId;
+				userManager = new oidc.UserManager({
+					authority: config.issuer,
+					client_id: config.clientId,
+					redirect_uri: location.href,
+					response_mode: 'fragment',
+					scope: 'openid profile'
+				});
+
+				userManager.events.addSilentRenewError(() => {
+					throw new Error('Silent renew failed');
+				});
+
+				userManager.events.addUserLoaded((user) => {
+                    document.getElementById("greeting").textContent = user.profile.name;
+				});
+
+				try {
+					// require a fresh signin when the page loads, this automatically gets rid of outdated local state
+					await userManager.signinCallback();
+					history.replaceState({}, '', location.pathname);
+				} catch (_) {
+					await userManager.signinRedirect();
+				}
+			})();
+		</script>
+        <div id="greeting"></div>
+		<div id="issuer"></div>
+		<div id="clientId"></div>
+		<div id="time"></div>
+	</body>
+</html>
