@@ -1,12 +1,14 @@
 
 from os import getenv
-from flask import Flask, Response
+from flask import Flask, Response, request
 from psycopg import Connection
 
 app = Flask(__name__)
 
 with open('index.html') as f:
     index_page = f.read()
+
+print("I'm a new version!")
 
 @app.route("/")
 def index():
@@ -36,6 +38,7 @@ def time():
 
 @app.route("/config")
 def config():
+    print(request.headers)
     return {
         "issuer": getenv("AUTH_KEYCLOAK_ISSUER"),
         "clientId": getenv("AUTH_KEYCLOAK_ID"),

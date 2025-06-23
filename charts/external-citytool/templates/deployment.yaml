@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
+  annotations:
+    contact: {{ .Values.contact | quote }}
   labels:
     {{- include "external-citytool.labels" . | nindent 4 }}
 spec:
@@ -9,6 +11,8 @@ spec:
   selector:
     matchLabels:
       {{- include "external-citytool.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -66,6 +70,10 @@ spec:
               value: {{ .Values.keycloakIssuer | quote }}
             - name: AUTH_KEYCLOAK_ID
               value: {{ .Values.keycloakClientId | quote }}
+            - name: HOSTNAME
+              value: {{ .Values.host | quote }}
+            - name: RESOURCE_API_GRAPHQL
+              value: {{ printf "%s/data-hub/graphql" .Values.keycloakIssuer | quote }}
           livenessProbe:
             httpGet:
               path: /livez
@@ -74,7 +82,15 @@ spec:
             httpGet:
               path: /readyz
               port: http
+          volumeMounts:
+            - mountPath: /data
+              name: data
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}
+      

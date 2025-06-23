@@ -16,6 +16,10 @@ allowExternalEgress: true
 
 tenant: ""
 citytool: ""
+contact: ""
+
+storage:
+  size: 5Gi
 
 resources:
   requests:
