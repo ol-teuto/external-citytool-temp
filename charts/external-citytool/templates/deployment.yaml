@@ -76,7 +76,7 @@ spec:
               value: {{ printf "%s/data-hub/graphql" .Values.keycloakIssuer | quote }}
           startupProbe:
             httpGet:
-              path: /readyz
+              path: /livez
               port: http
             periodSeconds: 5
             failureThreshold: 20
