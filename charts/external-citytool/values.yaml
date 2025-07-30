@@ -9,7 +9,12 @@ registryAuth:
 
 host: null
 certIssuer: null
-postgresService: null
+postgres:
+  host: null
+  secret: null
+  database: null
+  networkPolicy:
+    matchLabels: {}
 keycloakIssuer: null
 keycloakClientId: null
 allowExternalEgress: true

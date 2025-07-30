@@ -51,21 +51,21 @@ spec:
               protocol: TCP
           env:
             - name: DB_HOST
-              value: {{ .Values.postgresService | quote }}
+              value: {{ .Values.postgres.host | quote }}
             - name: DB_PORT
               value: "5432"
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ printf "%s-owner-user.%s.credentials.postgresql.acid.zalan.do" .Release.Name .Values.postgresService | quote }}
+                  name: {{ .Values.postgres.secret | quote }}
                   key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ printf "%s-owner-user.%s.credentials.postgresql.acid.zalan.do" .Release.Name .Values.postgresService | quote }}
+                  name: {{ .Values.postgres.secret | quote }}
                   key: password
             - name: DB_DATABASE
-              value: {{ .Release.Name | replace "-" "_" | quote }}
+              value: {{ .Values.postgres.database }}
             - name: AUTH_KEYCLOAK_ISSUER
               value: {{ .Values.keycloakIssuer | quote }}
             - name: AUTH_KEYCLOAK_ID
@@ -74,6 +74,12 @@ spec:
               value: {{ .Values.host | quote }}
             - name: RESOURCE_API_GRAPHQL
               value: {{ printf "%s/data-hub/graphql" .Values.keycloakIssuer | quote }}
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 20
           livenessProbe:
             httpGet:
               path: /livez
