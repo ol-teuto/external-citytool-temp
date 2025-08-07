@@ -1,26 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name | quote }}
   annotations:
     contact: {{ .Values.contact | quote }}
-  labels:
-    {{- include "external-citytool.labels" . | nindent 4 }}
+  labels: {{- include "urbanstack-shared-app.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      {{- include "external-citytool.selectorLabels" . | nindent 6 }}
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
   strategy:
     type: Recreate
   template:
     metadata:
-      labels:
-        {{- include "external-citytool.labels" . | nindent 8 }}
+      labels: {{- include "urbanstack-shared-app.labels" . | nindent 8 }}
     spec:
       {{- if and .Values.registryAuth.username .Values.registryAuth.password }}
       imagePullSecrets:
-        - name: {{ printf "pullsecret-%s" .Release.Name }}
+        - name: {{ printf "pullsecret-%s" .Release.Name | quote }}
       {{- end }}
       automountServiceAccountToken: false
       securityContext:
@@ -43,7 +40,7 @@ spec:
                 - ALL
             runAsGroup: 1000
             runAsUser: 1000
-          image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}@{{ .Values.image.sha }}"
+          image: {{ include "common.images.image" (dict "imageRoot" .Values.image) | quote }}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -65,7 +62,7 @@ spec:
                   name: {{ .Values.postgres.secret | quote }}
                   key: password
             - name: DB_DATABASE
-              value: {{ .Values.postgres.database }}
+              value: {{ .Values.postgres.database | quote }}
             - name: AUTH_KEYCLOAK_ISSUER
               value: {{ .Values.keycloakIssuer | quote }}
             - name: AUTH_KEYCLOAK_ID
@@ -98,5 +95,5 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}
+            claimName: {{ .Release.Name | quote }}
       

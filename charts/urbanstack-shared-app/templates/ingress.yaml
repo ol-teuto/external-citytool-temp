@@ -1,9 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}
-  labels:
-    {{- include "external-citytool.labels" . | nindent 4 }}
+  name: {{ .Release.Name | quote }}
+  labels: {{- include "urbanstack-shared-app.labels" . | nindent 4 }}
   annotations:
     kubernetes.io/tls-acme: "true"
     {{- with .Values.certIssuer }}
@@ -14,14 +13,10 @@ spec:
     - host: {{ .Values.host | quote }}
       http:
         paths:
-          - backend: 
-              service:
-                name: {{ .Release.Name }}
-                port:
-                  name: http
+          - path: /
             pathType: Prefix
-            path: /
+            backend: {{- include "common.ingress.backend" (dict "serviceName" .Release.Name "servicePort" "http" "context" $) | nindent 14 }}
   tls:
   - hosts:
     - {{ .Values.host | quote }}
-    secretName: {{ .Values.host }}-tls
+    secretName: {{ printf "%s-tls" .Values.host | quote }}

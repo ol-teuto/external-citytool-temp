@@ -1,6 +1,6 @@
 apiVersion: v2
-name: external-citytool
-description: library to easily deploy external citytools using flux
+name: urbanstack-shared-app
+description: library to easily deploy shared apps in urbanstack using flux
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,4 +15,11 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 1.2.2
+version: 1.0.0
+maintainers:
+  - name: ol-teuto
+    email: ol@teuto.net
+dependencies:
+  - name: common
+    version: 1.5.0
+    repository: oci://ghcr.io/teutonet/teutonet-helm-charts

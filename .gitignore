@@ -12,3 +12,9 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+*.tgz
+.idea
+.vscode
+.DS_Store
+/charts/*/charts
